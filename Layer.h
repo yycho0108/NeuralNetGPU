@@ -9,25 +9,32 @@
 #define LAYER_H_
 
 #include <vector>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include "Utils.h"
 
 class Layer {
 private:
-	std::vector<double> I; //input
-	std::vector<double> O; //output
-	std::vector<double> G; //gradient
+	int n;
+	double *I, *O, *G;
+	//std::vector<double> I; //input
+	//std::vector<double> O; //output
+	//std::vector<double> G; //gradient
 
 public:
 	Layer(int n);
 	~Layer();
-	std::vector<double>& transfer(std::vector<double>);
+	double*& transfer(double*);
 
-	void setI(std::vector<double>);
-	void setO(std::vector<double>);
-	void setG(std::vector<double>);
+	void setI(double*);
+	void setO(double*);
+	void setG(double*);
 
-	std::vector<double>& getI();
-	std::vector<double>& getO();
-	std::vector<double>& getG();
+	double*& getI();
+	double*& getO();
+	double*& getG();
+
+	int size();
 };
 
 #endif /* LAYER_H_ */

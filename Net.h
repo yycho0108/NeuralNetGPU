@@ -19,15 +19,16 @@
 class Net {
 private:
 	std::vector<int> topology;
-	std::vector<Layer> layers;
-	std::vector<std::vector<double>> weights;
-	std::vector<std::vector<double>> wT;
+	std::vector<Layer*> layers;
+	std::vector<double*> W;
+	std::vector<double*> WT;
+	std::vector<double*> dW;
 public:
 	Net(std::vector<int>);
 	~Net();
-	std::vector<double>& FF(std::vector<double> X);
-	void BP(std::vector<double> X, std::vector<double> Y);
-	void updatewT();
+	std::vector<double> FF(std::vector<double> X);
+	void BP(std::vector<double> Y);
+	void updateW();
 };
 
 #endif /* NET_H_ */

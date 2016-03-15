@@ -194,7 +194,10 @@ std::vector<double> mult(std::vector<double>& a, double b){
 	return operate_s(a,b,"mult");
 }
 
-__global__ void _transpose(double* d_a, double* d_b, int n, int m){
+__global__ void _transpose(double* d_a, double* d_b){
+	int n = gridDim.x;
+	int m = blockDim.x;
+
 	int i = blockIdx.x;
 	int j = threadIdx.x;
 	d_b[j*n+i] = d_a[i*m + j];
@@ -207,7 +210,7 @@ void transpose(std::vector<double>& src, std::vector<double>& dst, int n, int m)
 	cudaMalloc(&d_dst, n*m*sizeof(double));
 
 	cudaMemcpy(d_src,&src.front(),n*m*sizeof(double),cudaMemcpyHostToDevice);
-	_transpose<<<n,m>>>(d_src,d_dst,n,m);
+	_transpose<<<n,m>>>(d_src,d_dst);
 	cudaMemcpy(&dst.front(),d_dst,n*m*sizeof(double),cudaMemcpyDeviceToHost);
 
 	cudaFree(d_src);

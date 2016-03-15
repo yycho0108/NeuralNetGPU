@@ -37,10 +37,14 @@ int main(){
 
 	for(int i=0;i<2000;++i){
 		XOR_GEN(X,Y);
-		net.BP(X,Y);
+		net.FF(X);
+		//std::cout << Y[0] << ',' << net.FF(X)[0] << "-->";
+		net.BP(Y);
+		//std::cout << Y[0] << ',' << net.FF(X)[0] << std::endl;
 	}
 	for(int i=0;i<10;++i){
 		XOR_GEN(X,Y);
+		std::cout << X[0] << ',' << X[1] << ':';
 		std::cout << net.FF(X)[0] << ',' << Y[0] << std::endl;
 	}
 	return 0;
