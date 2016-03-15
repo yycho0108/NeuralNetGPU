@@ -23,6 +23,7 @@ private:
 	std::vector<double*> W;
 	std::vector<double*> WT;
 	std::vector<double*> dW;
+	std::vector<double*> mem; //memory storage
 public:
 	Net(std::vector<int>);
 	~Net();

@@ -6,7 +6,6 @@
  */
 #include "Net.h"
 
-
 void view(std::string suffix, double* v, int n){
 	std::cout << suffix << ":";
 	double* v_c = (double*) malloc(n*sizeof(double));
@@ -29,8 +28,8 @@ Net::Net(std::vector<int> topology): topology(topology)
 
 	for(int i=1;i<topology.size();++i){
 		double* pWT;
-		cudaMalloc(&pWT, topology[i]*topology[i-1]*sizeof(double));
-		randArr_g(topology[i],topology[i-1],pWT);
+		cudaMalloc(&pWT, topology[i-1]*topology[i]*sizeof(double));
+		randArr_g(topology[i-1],topology[i],pWT);
 		WT.push_back(pWT);
 
 		double* pw;
@@ -40,6 +39,10 @@ Net::Net(std::vector<int> topology): topology(topology)
 		double* pdw;
 		cudaMalloc(&pdw, topology[i]*topology[i-1]*sizeof(double));
 		dW.push_back(pdw);
+
+		double* pmem;
+		cudaMalloc(&pmem, topology[i]*sizeof(double));
+		mem.push_back(pmem);
 
 		//W.push_back(randArr(topology[i],topology[i-1]));//flattened
 		//WT.push_back(std::vector<double>(topology[i]*topology[i-1]));
@@ -56,6 +59,7 @@ Net::~Net() {
 		cudaFree(WT[i]);
 		cudaFree(W[i]);
 		cudaFree(dW[i]);
+		cudaFree(mem[i]);
 	}
 	for(auto& l : layers){
 		delete l;
@@ -93,14 +97,15 @@ void Net::BP(std::vector<double> y){
 	cudaMalloc(&Y,y.size()*sizeof(double));
 	cudaMemcpy(Y,&y.front(),y.size()*sizeof(double),cudaMemcpyHostToDevice);
 
+	sub_g(Y,layers.back()->getO(),topology.back(),true);
 
-	layers.back()->setG( sub_g(Y,layers.back()->getO(),topology.back(),true) );
+	layers.back()->setG(Y);
 
 	//view("lb", layers.back()->getG(),topology.back());
 
 	for(int i=topology.size()-2;i>=1;--i){
 		double*& G = layers[i+1]->getG(); //topology[i+1]
-		double* d = dot_g(W[i],G,topology[i],1,topology[i+1]); //may be wrong order
+		double* d = dot_g(W[i],G,topology[i],1,topology[i+1],mem[i-1]); //may be wrong order
 		//view("W", W[i], topology[i]*topology[i+1]);
 
 		//view("d", d, topology[i]);
@@ -111,16 +116,16 @@ void Net::BP(std::vector<double> y){
 		layers[i]->setG(mult_g(d,I,topology[i],true));
 
 		//view("g", layers[i]->getG(),topology[i]);
-		cudaFree(d);
+		//cudaFree(d);
 	}
 
 	for(int i=1;i<topology.size();++i){
 		auto& G = layers[i]->getG();
 		auto& O = layers[i-1]->getO();
 		auto dw = dot_g(G,O,topology[i],topology[i-1],1,dW[i-1]);
-		mult_g(dw,0.6,topology[i]*topology[i-1],true); //assign
-		add_g(WT[i-1],dw,topology[i]*topology[i-1],true); //assign
 
+		mult_g(dw,0.6,topology[i]*topology[i-1],true); //assign
+		add_g(WT[i-1],dw,topology[i]*topology[i-1],true); //assign;
 	}
 	updateW(); //update weight-transpose
 
